@@ -51,7 +51,7 @@ signals:
 
 private:
     friend QtTsDocument;
-    const QString m_context;
+    QString m_context;
     pugi::xml_node m_message;
 };
 
@@ -68,7 +68,7 @@ public:
     Q_INVOKABLE void setLanguage(const QString &lang);
     Q_INVOKABLE void addMessage(const QString &context, const QString &fileName, const QString &source,
                                 const QString &translation, const QString &comment = QString());
-
+    Q_INVOKABLE void setContext(const QString &context, const QString &comment);
     QString language() const;
     QString sourceLanguage() const;
     QList<QtTsMessage *> messages() const;

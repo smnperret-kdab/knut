@@ -160,6 +160,55 @@ void QtTsDocument::addMessage(const QString &context, const QString &fileName, c
     Q_EMIT fileUpdated();
 }
 
+/*!
+ * \qmlmethod QtTsDocument::setContext(string context, string comment)
+ * Set a new `context`for the message given with the `comment` as id
+ */
+
+
+void QtTsDocument::setContext(const QString &context, const QString &comment) {
+    LOG("QtTsDocument::setContext", context, comment);
+
+    initializeXml();
+
+    const auto contexts = m_document.select_nodes("//context");
+    for (const auto &contextNode : contexts) {
+
+        const auto messages = contextNode.node().select_nodes("message");
+        for (const auto &messageNode : messages) {
+
+            pugi::xml_node commentNode = messageNode.node().child("comment");
+            if (!commentNode.empty() && QString::fromLatin1(commentNode.text().as_string()) == comment) {
+
+                pugi::xml_node targetContextNode;
+                bool contextExists = false;
+                for (const auto &existingContext : contexts) {
+                    pugi::xml_node nameNode = existingContext.node().child("name");
+                    if (QString::fromLatin1(nameNode.text().as_string()) == context) {
+                        targetContextNode = existingContext.node();
+                        contextExists = true;
+                        break;
+                    }
+                }
+
+                if (!contextExists) {
+                    pugi::xml_node tsNode = m_document.select_node("TS").node();
+                    targetContextNode = tsNode.append_child("context");
+                    targetContextNode.append_child("name").append_child(pugi::node_pcdata).set_value(context.toLatin1().constData());
+                }
+
+                targetContextNode.append_move(messageNode.node());
+
+                setHasChanged(true);
+                Q_EMIT messagesChanged();
+                Q_EMIT fileUpdated();
+
+                return;
+            }
+        }
+    }
+}
+
 bool QtTsDocument::doSave(const QString &fileName)
 {
     return m_document.save_file(fileName.toLatin1().constData(), "    ");
